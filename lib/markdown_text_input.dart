@@ -11,7 +11,7 @@ class MarkdownTextInput extends StatefulWidget {
   final String initialValue;
 
   /// Validator for the TextFormField
-  final String? Function(String? value)? validators;
+  final String? Function(String? value)? validator;
 
   /// String displayed in [InputDecoration.labelText]
   final String? label;
@@ -61,7 +61,7 @@ class MarkdownTextInput extends StatefulWidget {
     this.label,
     this.hint,
     this.helper,
-    this.validators,
+    this.validator,
     this.textDirection = TextDirection.ltr,
     this.maxLines = 10,
     this.actions = const [
@@ -147,7 +147,7 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
             controller: _controller,
             focusNode: widget.focusNode,
             textCapitalization: TextCapitalization.sentences,
-            validator: (value) => widget.validators!(value),
+            validator: widget.validator,
             cursorColor: Theme.of(context).primaryColor,
             textDirection: widget.textDirection,
             keyboardType: widget.keyboardType,
