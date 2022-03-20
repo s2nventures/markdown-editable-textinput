@@ -13,11 +13,20 @@ class MarkdownTextInput extends StatefulWidget {
   /// Validator for the TextFormField
   final String? Function(String? value)? validators;
 
-  /// String displayed in [InputDecoration.hintText]
+  /// String displayed in [InputDecoration.labelText]
   final String? label;
 
+  /// String displayed in [InputDecoration.hintText]
+  final String? hint;
+
   /// String displayed in [InputDecoration.helperText]
-  final String? helperText;
+  final String? helper;
+
+  /// Radius of the border
+  final BorderRadius? borderRadius;
+
+  /// Color of the border
+  final Color? borderColor;
 
   /// Change the text direction of the input (RTL / LTR)
   final TextDirection? textDirection;
@@ -47,8 +56,11 @@ class MarkdownTextInput extends StatefulWidget {
   MarkdownTextInput(
     this.onTextChanged,
     this.initialValue, {
-    this.label = '',
-    this.helperText,
+    this.borderRadius,
+    this.borderColor,
+    this.label,
+    this.hint,
+    this.helper,
     this.validators,
     this.textDirection = TextDirection.ltr,
     this.maxLines = 10,
@@ -121,10 +133,11 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         border: Border.all(
-          color: Theme.of(context).colorScheme.secondary,
+          color: widget.borderColor ?? Theme.of(context).colorScheme.secondary,
           width: 2,
         ),
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        borderRadius:
+            widget.borderRadius ?? const BorderRadius.all(Radius.circular(10)),
       ),
       child: Column(
         children: <Widget>[
@@ -148,10 +161,11 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
                 borderSide:
                     BorderSide(color: Theme.of(context).colorScheme.secondary),
               ),
-              hintText: widget.label,
+              labelText: widget.label,
+              hintText: widget.hint,
               hintStyle:
                   const TextStyle(color: Color.fromRGBO(63, 61, 86, 0.5)),
-              helperText: widget.helperText,
+              helperText: widget.helper,
               contentPadding:
                   const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
             ),
