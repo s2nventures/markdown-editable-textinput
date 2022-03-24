@@ -178,9 +178,15 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
             height: 44,
             child: Material(
               color: backgroundColor,
-              borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(10),
-                  bottomRight: Radius.circular(10)),
+              borderRadius: widget.borderRadius != null
+                  ? BorderRadius.only(
+                      bottomLeft: widget.borderRadius!.bottomLeft,
+                      bottomRight: widget.borderRadius!.bottomRight,
+                    )
+                  : const BorderRadius.only(
+                      bottomLeft: Radius.circular(10),
+                      bottomRight: Radius.circular(10),
+                    ),
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: widget.actions.map((type) {
@@ -195,8 +201,9 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
                                   child: Text(
                                     'H#',
                                     style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -215,17 +222,16 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
                                         child: Text(
                                           'H$i',
                                           style: TextStyle(
-                                              fontSize: (18 - i).toDouble(),
-                                              fontWeight: FontWeight.w700),
+                                            fontSize: (18 - i).toDouble(),
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ExpandableButton(
                                     child: const Padding(
                                       padding: EdgeInsets.all(10),
-                                      child: Icon(
-                                        Icons.close,
-                                      ),
+                                      child: Icon(Icons.close),
                                     ),
                                   ),
                                 ],
