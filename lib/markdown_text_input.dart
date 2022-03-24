@@ -129,9 +129,13 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
 
   @override
   Widget build(BuildContext context) {
+    final backgroundColor = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0x1AFFFFFF)
+        : const Color(0x0A000000);
+
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: backgroundColor,
         border: Border.all(
           color: widget.borderColor ?? Theme.of(context).colorScheme.secondary,
           width: 2,
@@ -167,15 +171,13 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
               helperText: widget.helper,
               contentPadding:
                   const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
-              filled: true,
+              // filled: true,
             ),
           ),
           SizedBox(
             height: 44,
             child: Material(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0x1AFFFFFF)
-                  : const Color(0x0A000000),
+              color: backgroundColor,
               borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(10),
                   bottomRight: Radius.circular(10)),
