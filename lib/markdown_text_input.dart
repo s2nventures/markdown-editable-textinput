@@ -28,6 +28,9 @@ class MarkdownTextInput extends StatefulWidget {
   /// Color of the border
   final Color? borderColor;
 
+  /// Width of the border
+  final double borderWidth;
+
   /// Change the text direction of the input (RTL / LTR)
   final TextDirection? textDirection;
 
@@ -58,6 +61,7 @@ class MarkdownTextInput extends StatefulWidget {
     this.initialValue, {
     this.borderRadius,
     this.borderColor,
+    this.borderWidth = 2,
     this.label,
     this.hint,
     this.helper,
@@ -138,13 +142,13 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
         color: backgroundColor,
         border: Border.all(
           color: widget.borderColor ?? Theme.of(context).colorScheme.secondary,
-          width: 2,
+          width: widget.borderWidth,
         ),
         borderRadius:
             widget.borderRadius ?? const BorderRadius.all(Radius.circular(10)),
       ),
       child: Column(
-        children: <Widget>[
+        children: [
           TextFormField(
             textInputAction: widget.textInputAction ?? TextInputAction.newline,
             maxLines: widget.maxLines,
@@ -171,7 +175,6 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
               helperText: widget.helper,
               contentPadding:
                   const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
-              // filled: true,
             ),
           ),
           SizedBox(
