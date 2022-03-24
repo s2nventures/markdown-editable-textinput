@@ -148,7 +148,6 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
             focusNode: widget.focusNode,
             textCapitalization: TextCapitalization.sentences,
             validator: widget.validator,
-            cursorColor: Theme.of(context).primaryColor,
             textDirection: widget.textDirection,
             keyboardType: widget.keyboardType,
             decoration: InputDecoration(
@@ -173,7 +172,9 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
           SizedBox(
             height: 44,
             child: Material(
-              color: Theme.of(context).cardColor,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0x1AFFFFFF)
+                  : const Color(0x0A000000),
               borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(10),
                   bottomRight: Radius.circular(10)),
