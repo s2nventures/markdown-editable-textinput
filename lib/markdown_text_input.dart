@@ -167,6 +167,7 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
               helperText: widget.helper,
               contentPadding:
                   const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+              filled: true,
             ),
           ),
           SizedBox(
