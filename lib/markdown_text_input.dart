@@ -198,7 +198,7 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
             textCapitalization: TextCapitalization.sentences,
             validator: widget.validator,
             autovalidateMode: widget.autovalidateMode,
-            style: widget.textStyle ?? Theme.of(context).textTheme.bodyLarge,
+            style: widget.textStyle,
             textDirection: widget.textDirection,
             keyboardType: widget.keyboardType,
             decoration: InputDecoration(
