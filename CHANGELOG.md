@@ -1,3 +1,24 @@
+## [2.2.0] - 2023/01/02
+
+* Change the way of adding links to the input. Now, you need to select the text you want to be the label, then click the link button. 
+A dialog will show where you can enter the link.
+
+## [2.1.0] - 2022/11/17
+
+* Add textStyle property
+
+## [2.0.4] - 2022/10/28
+
+* Do not dispose controller when it is passed as an argument
+* Fix RTL selection
+* Update library dependencies
+* Bind textStyle of the TextField to the bodyText1 ThemeData
+
+## [2.0.3] - 2022/10/19
+
+* Add a node to request focus and get back to field on any action click.
+* Add possibility to pass validator as null.
+
 ## [2.0.2] - 2021/10/26
 
 * Add a controller parameter

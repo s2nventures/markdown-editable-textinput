@@ -1,6 +1,11 @@
+import 'dart:io';
+import 'dart:ui';
+
 import 'package:expandable/expandable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:markdown_editable_textinput/format_markdown.dart';
+import 'package:translator/translator.dart';
 
 /// Widget with markdown buttons
 class MarkdownTextInput extends StatefulWidget {
@@ -8,10 +13,13 @@ class MarkdownTextInput extends StatefulWidget {
   final ValueChanged<String> onTextChanged;
 
   /// Initial value you want to display
-  final String initialValue;
+  final String? initialValue;
 
-  /// Validator for the TextFormField
-  final String? Function(String? value)? validator;
+  /// Validator for the [TextFormField]
+  final FormFieldValidator<String>? validator;
+
+  /// Validation mode for [TextFormField]
+  final AutovalidateMode? autovalidateMode;
 
   /// String displayed in [InputDecoration.labelText]
   final String? label;
@@ -32,7 +40,7 @@ class MarkdownTextInput extends StatefulWidget {
   final double borderWidth;
 
   /// Change the text direction of the input (RTL / LTR)
-  final TextDirection? textDirection;
+  final TextDirection textDirection;
 
   /// The maximum of lines that can be display in the input
   final int? maxLines;
@@ -55,6 +63,13 @@ class MarkdownTextInput extends StatefulWidget {
   /// An icon for the input decoration
   final Widget? icon;
 
+  /// Overrides input text style
+  final TextStyle? textStyle;
+
+  /// If you prefer to use the dialog to insert links, you can choose to use the markdown syntax directly by setting [insertLinksByDialog] to false. In this case, the selected text will be used as label and link.
+  /// Default value is true.
+  final bool insertLinksByDialog;
+
   /// Constructor for [MarkdownTextInput]
   MarkdownTextInput(
     this.onTextChanged,
@@ -66,6 +81,7 @@ class MarkdownTextInput extends StatefulWidget {
     this.hint,
     this.helper,
     this.validator,
+    this.autovalidateMode,
     this.textDirection = TextDirection.ltr,
     this.maxLines = 10,
     this.actions = const [
@@ -75,33 +91,61 @@ class MarkdownTextInput extends StatefulWidget {
       MarkdownType.link,
       MarkdownType.list
     ],
+    this.textStyle,
     this.focusNode,
     this.controller,
+    this.insertLinksByDialog = true,
     this.keyboardType,
     this.textInputAction,
     this.icon,
   });
 
   @override
-  _MarkdownTextInputState createState() =>
-      _MarkdownTextInputState(controller ?? TextEditingController());
+  _MarkdownTextInputState createState() => _MarkdownTextInputState();
 }
 
 class _MarkdownTextInputState extends State<MarkdownTextInput> {
-  final TextEditingController _controller;
+  late TextEditingController _controller;
+  late FocusNode focusNode;
+
   TextSelection textSelection =
       const TextSelection(baseOffset: 0, extentOffset: 0);
 
-  _MarkdownTextInputState(this._controller);
+  @override
+  void initState() {
+    super.initState();
 
-  void onTap(MarkdownType type, {int titleSize = 1}) {
+    _controller = widget.controller ?? TextEditingController();
+
+    _controller.text = widget.initialValue ?? '';
+    _controller.addListener(() {
+      if (_controller.selection.baseOffset != -1)
+        textSelection = _controller.selection;
+      widget.onTextChanged(_controller.text);
+    });
+
+    focusNode = widget.focusNode ?? FocusNode();
+  }
+
+  void onTap(
+    MarkdownType type, {
+    int titleSize = 1,
+    String? link,
+    String? selectedText,
+  }) {
     final basePosition = textSelection.baseOffset;
     var noTextSelected =
         (textSelection.baseOffset - textSelection.extentOffset) == 0;
 
-    final result = FormatMarkdown.convertToMarkdown(type, _controller.text,
-        textSelection.baseOffset, textSelection.extentOffset,
-        titleSize: titleSize);
+    var fromIndex = textSelection.baseOffset;
+    var toIndex = textSelection.extentOffset;
+
+    final result = FormatMarkdown.convertToMarkdown(
+        type, _controller.text, fromIndex, toIndex,
+        titleSize: titleSize,
+        link: link,
+        selectedText:
+            selectedText ?? _controller.text.substring(fromIndex, toIndex));
 
     _controller.value = _controller.value.copyWith(
         text: result.data,
@@ -111,18 +155,8 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
     if (noTextSelected) {
       _controller.selection = TextSelection.collapsed(
           offset: _controller.selection.end - result.replaceCursorIndex);
+      focusNode.requestFocus();
     }
-  }
-
-  @override
-  void initState() {
-    _controller.text = widget.initialValue;
-    _controller.addListener(() {
-      if (_controller.selection.baseOffset != -1)
-        textSelection = _controller.selection;
-      widget.onTextChanged(_controller.text);
-    });
-    super.initState();
   }
 
   @override
@@ -138,6 +172,13 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
         : const Color(0x0A000000);
 
     return Container(
+      /*
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        border: Border.all(color: Theme.of(context).colorScheme.secondary, width: 2),
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+       */
       decoration: BoxDecoration(
         color: backgroundColor,
         border: Border.all(
@@ -150,12 +191,14 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
       child: Column(
         children: [
           TextFormField(
+            focusNode: focusNode,
             textInputAction: widget.textInputAction ?? TextInputAction.newline,
             maxLines: widget.maxLines,
             controller: _controller,
-            focusNode: widget.focusNode,
             textCapitalization: TextCapitalization.sentences,
             validator: widget.validator,
+            autovalidateMode: widget.autovalidateMode,
+            style: widget.textStyle ?? Theme.of(context).textTheme.bodyLarge,
             textDirection: widget.textDirection,
             keyboardType: widget.keyboardType,
             decoration: InputDecoration(
@@ -180,81 +223,206 @@ class _MarkdownTextInputState extends State<MarkdownTextInput> {
           SizedBox(
             height: 44,
             child: Material(
-              color: backgroundColor,
-              borderRadius: widget.borderRadius != null
-                  ? BorderRadius.only(
-                      bottomLeft: widget.borderRadius!.bottomLeft,
-                      bottomRight: widget.borderRadius!.bottomRight,
-                    )
-                  : const BorderRadius.only(
-                      bottomLeft: Radius.circular(10),
-                      bottomRight: Radius.circular(10),
-                    ),
+              color: Theme.of(context).cardColor,
+              borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(10),
+                  bottomRight: Radius.circular(10)),
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: widget.actions.map((type) {
-                  return type == MarkdownType.title
-                      ? ExpandableNotifier(
-                          child: Expandable(
-                            key: Key('H#_button'),
-                            collapsed: ExpandableButton(
-                              child: const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(10),
-                                  child: Text(
-                                    'H#',
-                                    style: TextStyle(
+                  switch (type) {
+                    case MarkdownType.title:
+                      return ExpandableNotifier(
+                        child: Expandable(
+                          key: Key('H#_button'),
+                          collapsed: ExpandableButton(
+                            child: const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(10),
+                                child: Text(
+                                  'H#',
+                                  style: TextStyle(
                                       fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
+                                      fontWeight: FontWeight.w700),
                                 ),
                               ),
                             ),
-                            expanded: Container(
-                              color: Colors.white10,
-                              child: Row(
-                                children: [
-                                  for (int i = 1; i <= 6; i++)
-                                    InkWell(
-                                      key: Key('H${i}_button'),
-                                      onTap: () => onTap(MarkdownType.title,
-                                          titleSize: i),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(10),
-                                        child: Text(
-                                          'H$i',
-                                          style: TextStyle(
+                          ),
+                          expanded: Container(
+                            color: Colors.white10,
+                            child: Row(
+                              children: [
+                                for (int i = 1; i <= 6; i++)
+                                  InkWell(
+                                    key: Key('H${i}_button'),
+                                    onTap: () =>
+                                        onTap(MarkdownType.title, titleSize: i),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(10),
+                                      child: Text(
+                                        'H$i',
+                                        style: TextStyle(
                                             fontSize: (18 - i).toDouble(),
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
+                                            fontWeight: FontWeight.w700),
                                       ),
                                     ),
-                                  ExpandableButton(
-                                    child: const Padding(
-                                      padding: EdgeInsets.all(10),
-                                      child: Icon(Icons.close),
+                                  ),
+                                ExpandableButton(
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(10),
+                                    child: Icon(
+                                      Icons.close,
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
-                        )
-                      : InkWell(
-                          key: Key(type.key),
-                          onTap: () => onTap(type),
-                          child: Padding(
-                            padding: EdgeInsets.all(10),
-                            child: Icon(type.icon),
-                          ),
-                        );
+                        ),
+                      );
+                    case MarkdownType.link:
+                      return _basicInkwell(
+                        type,
+                        customOnTap: !widget.insertLinksByDialog
+                            ? null
+                            : () async {
+                                var text = _controller.text.substring(
+                                    textSelection.baseOffset,
+                                    textSelection.extentOffset);
+
+                                var textController = TextEditingController()
+                                  ..text = text;
+                                var linkController = TextEditingController();
+                                var textFocus = FocusNode();
+                                var linkFocus = FocusNode();
+
+                                var color =
+                                    Theme.of(context).colorScheme.secondary;
+                                var language = kIsWeb
+                                    ? window.locale.languageCode
+                                    : Platform.localeName.substring(0, 2);
+
+                                var textLabel = 'Text';
+                                var linkLabel = 'Link';
+                                try {
+                                  var textTranslation = await GoogleTranslator()
+                                      .translate(textLabel, to: language);
+                                  textLabel = textTranslation.text;
+
+                                  var linkTranslation = await GoogleTranslator()
+                                      .translate(linkLabel, to: language);
+                                  linkLabel = linkTranslation.text;
+                                } catch (e) {
+                                  textLabel = 'Text';
+                                  linkLabel = 'Link';
+                                }
+
+                                await showDialog<void>(
+                                    context: context,
+                                    builder: (context) {
+                                      return AlertDialog(
+                                        title: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            GestureDetector(
+                                                child: Icon(Icons.close),
+                                                onTap: () =>
+                                                    Navigator.pop(context))
+                                          ],
+                                        ),
+                                        content: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            TextField(
+                                              controller: textController,
+                                              decoration: InputDecoration(
+                                                hintText: 'example',
+                                                label: Text(textLabel),
+                                                labelStyle:
+                                                    TextStyle(color: color),
+                                                focusedBorder:
+                                                    OutlineInputBorder(
+                                                        borderSide: BorderSide(
+                                                            color: color,
+                                                            width: 2)),
+                                                enabledBorder:
+                                                    OutlineInputBorder(
+                                                        borderSide: BorderSide(
+                                                            color: color,
+                                                            width: 2)),
+                                              ),
+                                              autofocus: text.isEmpty,
+                                              focusNode: textFocus,
+                                              textInputAction:
+                                                  TextInputAction.next,
+                                              onSubmitted: (value) {
+                                                textFocus.unfocus();
+                                                FocusScope.of(context)
+                                                    .requestFocus(linkFocus);
+                                              },
+                                            ),
+                                            SizedBox(height: 10),
+                                            TextField(
+                                              controller: linkController,
+                                              decoration: InputDecoration(
+                                                hintText: 'https://example.com',
+                                                label: Text(linkLabel),
+                                                labelStyle:
+                                                    TextStyle(color: color),
+                                                focusedBorder:
+                                                    OutlineInputBorder(
+                                                        borderSide: BorderSide(
+                                                            color: color,
+                                                            width: 2)),
+                                                enabledBorder:
+                                                    OutlineInputBorder(
+                                                        borderSide: BorderSide(
+                                                            color: color,
+                                                            width: 2)),
+                                              ),
+                                              autofocus: text.isNotEmpty,
+                                              focusNode: linkFocus,
+                                            ),
+                                          ],
+                                        ),
+                                        contentPadding: EdgeInsets.fromLTRB(
+                                            24.0, 20.0, 24.0, 0),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              onTap(type,
+                                                  link: linkController.text,
+                                                  selectedText:
+                                                      textController.text);
+                                              Navigator.pop(context);
+                                            },
+                                            child: const Text('OK'),
+                                          ),
+                                        ],
+                                      );
+                                    });
+                              },
+                      );
+                    default:
+                      return _basicInkwell(type);
+                  }
                 }).toList(),
               ),
             ),
           )
         ],
+      ),
+    );
+  }
+
+  Widget _basicInkwell(MarkdownType type, {Function? customOnTap}) {
+    return InkWell(
+      key: Key(type.key),
+      onTap: () => customOnTap != null ? customOnTap() : onTap(type),
+      child: Padding(
+        padding: EdgeInsets.all(10),
+        child: Icon(type.icon),
       ),
     );
   }
